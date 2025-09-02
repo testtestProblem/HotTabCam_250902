@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  IgnorableNamespaces="uap mp desktop rescap">
+
+  <Identity
+    Name="34b85b77-480b-4295-89d1-004c4ba9280a"
+    Publisher="CN=TT"
+    Version="2.0.7.0" />
+
+  <Properties>
+    <DisplayName>HotTabCamUWP</DisplayName>
+    <PublisherDisplayName>Winmate Inc.</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14393.0" MaxVersionTested="10.0.14393.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="HotTabCam UWP"
+        Description="Package"
+        BackgroundColor="transparent"
+        Square150x150Logo="Images\Square150x150Logo.png"
+        Square44x44Logo="Images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"  Square71x71Logo="Images\SmallTile.png" Square310x310Logo="Images\LargeTile.png"/>
+        <uap:SplashScreen Image="Images\SplashScreen.png" />
+      </uap:VisualElements>
+		<Extensions>
+			<desktop:Extension Category="windows.fullTrustProcess" Executable="flash\flash.exe">
+			<desktop:FullTrustProcess>
+				<desktop:ParameterGroup GroupId="SwitchBtn" Parameters="/CloseAPP" />
+				<desktop:ParameterGroup GroupId="FlashBtn" Parameters="/FlashOn" />
+				<desktop:ParameterGroup GroupId="FlashBtnOff" Parameters="/FlashOff" />
+			</desktop:FullTrustProcess>
+			</desktop:Extension>
+		</Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+	<rescap:Capability Name="extendedExecutionUnconstrained"/>
+	<rescap:Capability Name="broadFileSystemAccess" />
+    <uap:Capability Name="userAccountInformation"/>
+    <uap:Capability Name="picturesLibrary"/>
+    <DeviceCapability Name="microphone"/>
+    <DeviceCapability Name="webcam"/>
+  </Capabilities>
+</Package>
