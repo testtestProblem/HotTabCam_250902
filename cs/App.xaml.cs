@@ -128,11 +128,15 @@ namespace CameraManualControls
 
         private async void OnResuming(object sender, object e)
         {
+
             Debug.WriteLine("OnResuming abcd");
+            MainPage test= new MainPage();
+
+            await test.InitializeCameraAsync(MainPage._groupSelectionIndex);
            // await MainPage.InitializeCameraAsync(MainPage._groupSelectionIndex);
-            // You were only Suspended (not terminated). Refresh transient data if needed.
-            // Heavy I/O should be awaited elsewhere, not directly here.
-            // e.g., kick lightweight refresh, restart timers, resume animations.
+           // You were only Suspended (not terminated). Refresh transient data if needed.
+           // Heavy I/O should be awaited elsewhere, not directly here.
+           // e.g., kick lightweight refresh, restart timers, resume animations.
         }
 
         private void OnEnteredBackground(object sender, EnteredBackgroundEventArgs e)
