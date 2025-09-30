@@ -50,11 +50,11 @@
     </Page.Resources>
 
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="Black">
 
         <!--Camera preview-->
-        <CaptureElement x:Name="PreviewControl" Stretch="Uniform" ManipulationMode="Scale"
-                        ManipulationDelta="PreviewControl_ManipulationDelta" Tapped="PreviewControl_Tapped"/>
+        <CaptureElement x:Name="PreviewControl" Stretch="Uniform" ManipulationMode="Scale" 
+                        ManipulationDelta="PreviewControl_ManipulationDelta" Tapped="PreviewControl_Tapped" FocusVisualSecondaryBrush="#99C52020"/>
 
         <Canvas x:Name="FocusCanvas">
             <Rectangle x:Name="FocusRectangle" Stroke="White" StrokeThickness="2" Visibility="Collapsed"/>

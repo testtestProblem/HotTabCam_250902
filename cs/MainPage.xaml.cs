@@ -102,6 +102,9 @@ namespace CameraManualControls
         private string _backVideoIndex = "3264x2448";
         private string _backPicIndex = "3264x2448";
         public int CountDown_Seconds=0;
+
+        public int noSouceGroup_fage = 0;
+
         DispatcherTimer Timer = new DispatcherTimer();
         #region Constructor, lifecycle and navigation
         public Action<object, SuspendingEventArgs> Suspending { get; }
@@ -115,8 +118,8 @@ namespace CameraManualControls
             NavigationCacheMode = NavigationCacheMode.Disabled;
 
             // Useful to know when to initialize/clean up the camera
-            //Application.Current.Suspending += Application_Suspending;
-            //Application.Current.Resuming += Application_Resuming;
+            Application.Current.Suspending += Application_Suspending;
+            Application.Current.Resuming += Application_Resuming;
 
         }
 
@@ -149,7 +152,7 @@ namespace CameraManualControls
 
             //    _frontCamFirstTimeInitial = false;
             //    _backCamFirstTimeInitial = false;
-                //await CleanupMediaCaptureAsync();
+            //    await CleanupMediaCaptureAsync();
             //}
 
         }
@@ -160,10 +163,18 @@ namespace CameraManualControls
             // Handle global application events only if this page is active
             if (Frame.CurrentSourcePageType == typeof(MainPage))
             {
+                // Ensure the current window is active
+                Window.Current.Activate();
+
+                await CleanupMediaCaptureAsync();
+
                 await SetupUiAsync();
 
-                await InitializeCameraAsync(_groupSelectionIndex);
+                // Ensure the current window is active
+                Window.Current.Activate();
 
+                await InitializeCameraAsync(_groupSelectionIndex);
+                while (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
             }
         }
 
@@ -376,16 +387,20 @@ namespace CameraManualControls
         /// <returns></returns>
         public async Task InitializeCameraAsync(int deviceID)
         {
-            Debug.WriteLine("WM_ InitializeCameraAsync");
+            Debug.WriteLine("WM_ InitializeCameraAsync start");
 
             var allGroups = await MediaFrameSourceGroup.FindAllAsync();
             if (allGroups.Count == 0)
             {
-                //Debug.WriteLine("No source groups found.");
-                return;
+                Debug.WriteLine("No source groups(camera) found.");
+                noSouceGroup_fage = 1;
+                return ;
             }
             if (allGroups.Count == 1)
             {
+                Debug.WriteLine("success found source groups(camera).");
+                noSouceGroup_fage = 0;
+
                 SwitchBtn.IsEnabled = false;
                 SwitchBtn.Visibility = Visibility.Collapsed;
             }
@@ -414,6 +429,7 @@ namespace CameraManualControls
             PreviewControl.FlowDirection = _mirroringPreview ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
             // The Canvas containing the FocusRectangle should be mirrored if the CaptureElement is, so LeftToRighttaps are shown in the correct position
             Debug.WriteLine("_mirroringPreview " + _mirroringPreview);
+            //if (_mirroringPreview == false) noSouceGroup_fage = 1;
 
             _previewer = new MediaCapturePreviewer(PreviewControl, Dispatcher);
             var settings = new MediaCaptureInitializationSettings
@@ -440,10 +456,13 @@ namespace CameraManualControls
 
                 // Register for a notification when video recording has reached the maximum time and when something goes wrong
                 _previewer.MediaCapture.RecordLimitationExceeded += MediaCapture_RecordLimitationExceeded;
+
+                Debug.WriteLine("inital camera success");
+                Debug.WriteLine(_groupSelectionIndex + " if 1 is rear camera"); 
             }
             catch (UnauthorizedAccessException)
             {
-                //Debug.WriteLine("The app was denied access to the camera");
+                Debug.WriteLine("The app was denied access to the camera");
             }
 
             // If initialization succeeded, start the preview
@@ -478,10 +497,12 @@ namespace CameraManualControls
                     {
                         VideoEncodingProperties vp = (VideoEncodingProperties)res[i];
 
+                        Debug.WriteLine("enmu resolution");
                         if (vp.Width > maxResolution)
                         {
                             indexMaxResolution = i;
                             maxResolution = vp.Width;
+                            Debug.WriteLine(indexMaxResolution + "   ----------  over max width");
                             Debug.WriteLine("Resolution: " + vp.Width + "X" + vp.Height);
                             Debug.WriteLine("FrameRate: " + vp.FrameRate.Numerator.ToString());
                             Debug.WriteLine("Type: " + vp.Subtype.ToString());
@@ -489,6 +510,8 @@ namespace CameraManualControls
                     }
                     if ((((VideoEncodingProperties)res[indexMaxResolution]).Width > 2592)) //5M
                     {
+                        Debug.WriteLine("_mirroringPreview error over max resolution");
+
                         _mirroringPreview = false;
                         if (!_backCamFirstTimeInitial)
                         {
@@ -499,26 +522,26 @@ namespace CameraManualControls
                         }
 
                         foreach (ComboBoxItem cbi in FormatComboBox.Items)
+                        {
+                            Debug.WriteLine("FormatComboBox0: " + cbi.Content.ToString());
+                            if (cbi.Content as string == _backPicIndex)
                             {
-                                Debug.WriteLine("FormatComboBox0: " + cbi.Content.ToString());
-                                if (cbi.Content as string == _backPicIndex)
-                                {
-                                    FormatComboBox.PlaceholderText = cbi.Content.ToString();
-                                    var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
-                                    await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, encodingProperties);
-                                }
+                                FormatComboBox.PlaceholderText = cbi.Content.ToString();
+                                var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
+                                await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, encodingProperties);
                             }
-
-                            foreach (ComboBoxItem cbi in BackVideoFormatComboBox.Items)
+                        }
+                        
+                        foreach (ComboBoxItem cbi in BackVideoFormatComboBox.Items)
+                        {
+                            Debug.WriteLine("FormatComboBox1: " + cbi.Content.ToString());
+                            if (cbi.Content as string == _backVideoIndex)
                             {
-                                Debug.WriteLine("FormatComboBox1: " + cbi.Content.ToString());
-                                if (cbi.Content as string == _backVideoIndex)
-                                {
-                                    BackVideoFormatComboBox.PlaceholderText = cbi.Content.ToString();
-                                    var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
-                                    await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, encodingProperties);
-                                }
+                                BackVideoFormatComboBox.PlaceholderText = cbi.Content.ToString();
+                                var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
+                                await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, encodingProperties);
                             }
+                        }
 
 
                         FlashBtn.IsEnabled = true;
@@ -540,14 +563,14 @@ namespace CameraManualControls
                             _frontCamFirstTimeInitial = true;
                         }
 
-                            foreach (ComboBoxItem cbi in FrontVideoFormatComboBox.Items)
+                        foreach (ComboBoxItem cbi in FrontVideoFormatComboBox.Items)
+                        {
+                            Debug.WriteLine("FormatComboBox2: " + cbi.Content.ToString());
+                            if ((cbi.Content as string).Equals("1920x1080"))
                             {
-                                Debug.WriteLine("FormatComboBox2: " + cbi.Content.ToString());
-                                if ((cbi.Content as string).Equals("1920x1080"))
-                                {
-                                    FrontVideoFormatComboBox.PlaceholderText = cbi.Content.ToString();
-                                    var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
-                                    await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, encodingProperties);
+                                FrontVideoFormatComboBox.PlaceholderText = cbi.Content.ToString();
+                                var encodingProperties = (cbi.Tag as StreamResolution).EncodingProperties;
+                                await _previewer.MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, encodingProperties);
                                 Debug.WriteLine("FormatComboBox1: " + cbi.Content.ToString());
                                 break;
                             }
@@ -803,7 +826,7 @@ namespace CameraManualControls
         /// Attempts to lock the page orientation, hide the StatusBar (on Phone) and registers event handlers for hardware buttons and orientation sensors
         /// </summary>
         /// <returns></returns>
-        private async Task SetupUiAsync()
+        public async Task SetupUiAsync()
         {
             // Hide the status bar
             if (ApiInformation.IsTypePresent("Windows.UI.ViewManagement.StatusBar"))
@@ -1262,7 +1285,7 @@ namespace CameraManualControls
         /// Unregisters FrameArrived event handlers, stops and disposes frame readers
         /// and disposes the MediaCapture object.
         /// </summary>
-        private async Task CleanupMediaCaptureAsync()
+        public async Task CleanupMediaCaptureAsync()
         {
             if (_previewer.MediaCapture != null)
             {

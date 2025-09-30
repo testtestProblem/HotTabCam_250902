@@ -43,6 +43,7 @@ namespace CameraManualControls
         //static public Task MainPage.TakePhotoAsync();
         public App()
         {
+            Debug.WriteLine("App init");
             this.InitializeComponent();
             this.UnhandledException += OnUnhandledException;
 
@@ -69,12 +70,12 @@ namespace CameraManualControls
             switch (result)
             {
                 case ExtendedExecutionForegroundResult.Allowed:
-                    Debug.WriteLine("Allowed");
+                    Debug.WriteLine("Allowed Foreground Session");
                     break;
 
                 default:
                 case ExtendedExecutionForegroundResult.Denied:
-                    Debug.WriteLine("Denied");
+                    Debug.WriteLine("Denied Foreground Session");
                     break;
             }
 
@@ -117,40 +118,37 @@ namespace CameraManualControls
             Debug.WriteLine("OnSuspending abcd" );
             try
             {
-                // Stop timers, save view models, persist navigation state, etc.
-               // await SaveStateAsync();
             }
             finally
             {
-                //deferral.Complete();
             }
         }
 
         private async void OnResuming(object sender, object e)
         {
-
             Debug.WriteLine("OnResuming abcd");
-            MainPage test= new MainPage();
+            //MainPage test= new MainPage();
 
-            await test.InitializeCameraAsync(MainPage._groupSelectionIndex);
-           // await MainPage.InitializeCameraAsync(MainPage._groupSelectionIndex);
-           // You were only Suspended (not terminated). Refresh transient data if needed.
-           // Heavy I/O should be awaited elsewhere, not directly here.
-           // e.g., kick lightweight refresh, restart timers, resume animations.
+            //await test.CleanupMediaCaptureAsync();
+            //await test.SetupUiAsync();
+            //await test.InitializeCameraAsync(MainPage._groupSelectionIndex);
         }
 
         private void OnEnteredBackground(object sender, EnteredBackgroundEventArgs e)
         {
-            Debug.WriteLine("EnteredBackground → 準備可能被終止，先存狀態");
+            Debug.WriteLine("Entered Background");
+
+
         }
 
         private void OnLeavingBackground(object sender, LeavingBackgroundEventArgs e)
         {
-            Debug.WriteLine("LeavingBackground → 回到前景");
+            Debug.WriteLine("Leaving Background");
         }
 
         private void SessionRevoked(object sender, ExtendedExecutionForegroundRevokedEventArgs args)
         {
+            Debug.WriteLine("Session Revoked");
             throw new NotImplementedException();
         }
 
