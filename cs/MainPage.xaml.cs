@@ -104,6 +104,7 @@ namespace CameraManualControls
         public int CountDown_Seconds=0;
 
         public int noSouceGroup_fage = 0;
+        public int _mirroringPreview_flag = 0;
 
         DispatcherTimer Timer = new DispatcherTimer();
         #region Constructor, lifecycle and navigation
@@ -121,11 +122,15 @@ namespace CameraManualControls
             Application.Current.Suspending += Application_Suspending;
             Application.Current.Resuming += Application_Resuming;
 
+
+            // Subscribe to background events
+            Application.Current.EnteredBackground += OnEnteredBackground;
+            Application.Current.LeavingBackground += OnLeavingBackground;
         }
 
         private void Application_Suspending(object sender, SuspendingEventArgs e)
         {
-            Debug.WriteLine("Application_Suspending");
+            Debug.WriteLine("Application_Suspending   mainpage.xaml");
 
             //// Handle global application events only if this page is active
             //if (Frame.CurrentSourcePageType == typeof(MainPage))
@@ -159,7 +164,7 @@ namespace CameraManualControls
 
         private async void Application_Resuming(object sender, object o)
         {
-            Debug.WriteLine("Application_Resuming");
+            Debug.WriteLine("Application_Resuming  mainpage.xaml");
             // Handle global application events only if this page is active
             if (Frame.CurrentSourcePageType == typeof(MainPage))
             {
@@ -174,9 +179,54 @@ namespace CameraManualControls
                 Window.Current.Activate();
 
                 await InitializeCameraAsync(_groupSelectionIndex);
-                while (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
+                while (noSouceGroup_fage == 1 || _mirroringPreview_flag==1)
+                {
+                    if (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
+                   /* else if(_mirroringPreview_flag == 1)
+                    {
+                        await CleanupMediaCaptureAsync();
+
+                        await SetupUiAsync();
+
+                        // Ensure the current window is active
+                        Window.Current.Activate();
+
+                        await InitializeCameraAsync(_groupSelectionIndex);
+                    }*/
+                }
             }
         }
+
+        private async void OnEnteredBackground(object sender, EnteredBackgroundEventArgs e)
+        {
+            Debug.WriteLine("Entered Background  mainpage.xaml");
+            /*
+            // Get a deferral to allow for asynchronous operations
+            var deferral = e.GetDeferral();
+
+            // Clean up camera resources
+            await CleanupCameraAsync();
+
+            // Complete the deferral
+            deferral.Complete();*/
+        }
+
+
+        private async void OnLeavingBackground(object sender, LeavingBackgroundEventArgs e)
+        {
+            Debug.WriteLine("Leaving Background  mainpage.xaml");
+            /*
+            // Re-initialize the camera
+            await SetupUiAsync();
+
+            // Ensure the current window is active
+            Window.Current.Activate();
+
+            await InitializeCameraAsync(_groupSelectionIndex);
+            while (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
+        */
+        }
+
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -282,7 +332,6 @@ namespace CameraManualControls
 
         private void Timer_Tick(object sender, object e)
         {
-
             TimeSpan duration = new TimeSpan(0, 0, CountDown_Seconds - 1);
             timerText.Text = duration.ToString().Substring(3,5);
             CountDown_Seconds = CountDown_Seconds + 1;
@@ -429,7 +478,8 @@ namespace CameraManualControls
             PreviewControl.FlowDirection = _mirroringPreview ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
             // The Canvas containing the FocusRectangle should be mirrored if the CaptureElement is, so LeftToRighttaps are shown in the correct position
             Debug.WriteLine("_mirroringPreview " + _mirroringPreview);
-            //if (_mirroringPreview == false) noSouceGroup_fage = 1;
+            if (_mirroringPreview == false) _mirroringPreview_flag = 1;
+            else _mirroringPreview_flag = 0;
 
             _previewer = new MediaCapturePreviewer(PreviewControl, Dispatcher);
             var settings = new MediaCaptureInitializationSettings

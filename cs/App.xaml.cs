@@ -61,7 +61,7 @@ namespace CameraManualControls
         /// <param name="e">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Debug.WriteLine("OnLaunched abcd");
+            Debug.WriteLine("OnLaunched abcd");/*
             var newSession = new ExtendedExecutionForegroundSession();
             newSession.Reason = ExtendedExecutionForegroundReason.Unconstrained;
             newSession.Description = "Long Running Processing";
@@ -77,7 +77,7 @@ namespace CameraManualControls
                 case ExtendedExecutionForegroundResult.Denied:
                     Debug.WriteLine("Denied Foreground Session");
                     break;
-            }
+            }*/
 
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
