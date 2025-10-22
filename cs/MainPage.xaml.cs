@@ -95,7 +95,7 @@ namespace CameraManualControls
 
         // Object to manage access to camera devices
         private MediaCapturePreviewer _previewer = null;
-        private bool _FirstTimeInitial = false;
+        static public bool _FirstTimeInitial = false;
         private bool _frontCamFirstTimeInitial = false;
         private bool _frontCamFirstTimeInitialWorkaround = false;
         private bool _backCamFirstTimeInitial = false;
@@ -166,7 +166,7 @@ namespace CameraManualControls
         {
             Debug.WriteLine("Application_Resuming  mainpage.xaml");
             // Handle global application events only if this page is active
-            if (Frame.CurrentSourcePageType == typeof(MainPage))
+            /*if (Frame.CurrentSourcePageType == typeof(MainPage))
             {
                 // Ensure the current window is active
                 Window.Current.Activate();
@@ -175,14 +175,13 @@ namespace CameraManualControls
 
                 await SetupUiAsync();
 
-                // Ensure the current window is active
-                Window.Current.Activate();
+                
 
                 await InitializeCameraAsync(_groupSelectionIndex);
                 while (noSouceGroup_fage == 1 || _mirroringPreview_flag==1)
                 {
                     if (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
-                   /* else if(_mirroringPreview_flag == 1)
+                    else if(_mirroringPreview_flag == 1)
                     {
                         await CleanupMediaCaptureAsync();
 
@@ -192,9 +191,9 @@ namespace CameraManualControls
                         Window.Current.Activate();
 
                         await InitializeCameraAsync(_groupSelectionIndex);
-                    }*/
+                    }
                 }
-            }
+            }*/
         }
 
         private async void OnEnteredBackground(object sender, EnteredBackgroundEventArgs e)
@@ -225,6 +224,33 @@ namespace CameraManualControls
             await InitializeCameraAsync(_groupSelectionIndex);
             while (noSouceGroup_fage == 1) await InitializeCameraAsync(_groupSelectionIndex);
         */
+            // Ensure the current window is active
+            Window.Current.Activate();
+
+            await CleanupMediaCaptureAsync();
+
+            await SetupUiAsync();
+
+            // Ensure the current window is active
+            Window.Current.Activate();
+
+            await InitializeCameraAsync(_groupSelectionIndex);
+            while (noSouceGroup_fage == 1 || _mirroringPreview_flag == 1)
+            {
+                if (noSouceGroup_fage == 1) 
+                    await InitializeCameraAsync(_groupSelectionIndex);
+                else if(_mirroringPreview_flag == 1)
+                {
+                    await CleanupMediaCaptureAsync();
+
+                    await SetupUiAsync();
+
+                    // Ensure the current window is active
+                    Window.Current.Activate();
+
+                    await InitializeCameraAsync(_groupSelectionIndex);
+                }
+            }
         }
 
 
@@ -449,9 +475,18 @@ namespace CameraManualControls
             {
                 Debug.WriteLine("success found source groups(camera).");
                 noSouceGroup_fage = 0;
+                deviceID = 0;
 
-                SwitchBtn.IsEnabled = false;
-                SwitchBtn.Visibility = Visibility.Collapsed;
+
+                //SwitchBtn.IsEnabled = false;
+                //SwitchBtn.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                noSouceGroup_fage = 2;
+                SwitchBtn.IsEnabled = true;
+                SwitchBtn.Visibility = Visibility.Visible;
+                Debug.WriteLine("source groups(camera): " + allGroups.Count);
             }
 
             // Pick next group in the array after each time the Next button is clicked.
@@ -461,6 +496,9 @@ namespace CameraManualControls
 
             if (_FirstTimeInitial == false)
             {
+                _FirstTimeInitial = true;
+                Debug.WriteLine("_FirstTimeInitial false");
+
                 _mirroringPreview = true;
                 if (selectedGroup.DisplayName.Contains("Rear") && allGroups.Count > 1) //Initial Back camera at first time
                 {
@@ -478,7 +516,11 @@ namespace CameraManualControls
             PreviewControl.FlowDirection = _mirroringPreview ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
             // The Canvas containing the FocusRectangle should be mirrored if the CaptureElement is, so LeftToRighttaps are shown in the correct position
             Debug.WriteLine("_mirroringPreview " + _mirroringPreview);
-            if (_mirroringPreview == false) _mirroringPreview_flag = 1;
+            if (_mirroringPreview == false)
+            {
+                _mirroringPreview_flag = 1;
+                return;
+            }
             else _mirroringPreview_flag = 0;
 
             _previewer = new MediaCapturePreviewer(PreviewControl, Dispatcher);
@@ -844,7 +886,7 @@ namespace CameraManualControls
                 // If a recording is in progress during cleanup, stop it to save the recording
                 if (_isRecording)
                 {
-                    //await StopRecordingAsync();
+                    await StopRecordingAsync();
                 }
 
                 if (_isPreviewing)
@@ -852,7 +894,7 @@ namespace CameraManualControls
                     // The call to stop the preview is included here for completeness, but can be
                     // safely removed if a call to MediaCapture.Dispose() is being made later,
                     // as the preview will be automatically stopped at that point
-                    //await StopPreviewAsync();
+                    await StopPreviewAsync();
                 }
 
                 _isInitialized = false;
@@ -1293,13 +1335,23 @@ namespace CameraManualControls
             VideoButton.IsEnabled = true;
             FlashBtn.IsEnabled = true;
             SettingBtn.IsEnabled = true;
-
         }
 
         #endregion
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
+            if (noSouceGroup_fage != 2)
+            {
+                var allGroups = await MediaFrameSourceGroup.FindAllAsync();
+                if (allGroups.Count <= 1)
+                {
+                    var dialog = new MessageDialog("Can not find second camera");
+                    await dialog.ShowAsync();
+                    return;     //no second camera
+                }
+                
+            }
             try
             {
                 if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1, 0))
@@ -1337,12 +1389,12 @@ namespace CameraManualControls
         /// </summary>
         public async Task CleanupMediaCaptureAsync()
         {
+            _FirstTimeInitial = false;
             if (_previewer.MediaCapture != null)
             {
                 using (var mediaCapture = _previewer.MediaCapture)
                 {
                     //_previewer.MediaCapture = null;
-
                     foreach (var reader in _sourceReaders)
                     {
                         if (reader != null)

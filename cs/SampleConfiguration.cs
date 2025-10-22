@@ -74,7 +74,8 @@ namespace CameraManualControls
             catch (UnauthorizedAccessException)
             {
                 // This can happen if access to the camera has been revoked.
-
+                Debug.WriteLine("Fail MediaCapture.InitializeAsync() or MediaCapture.StartPreviewAsync()");
+                
                 await CleanupCameraAsync();
             }
         }
